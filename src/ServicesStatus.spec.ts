@@ -58,7 +58,7 @@ describe("ServicesStatus", () => {
     });
 
     it("should throw error when a required service URL is missing", () => {
-      const incompleteUrls = { ...mockServiceUrls };
+      const incompleteUrls: Record<string, string> = { ...mockServiceUrls };
       delete incompleteUrls["knowledge-base"];
 
       expect(
@@ -75,7 +75,7 @@ describe("ServicesStatus", () => {
     });
 
     it("should throw error when service URL is invalid", () => {
-      const invalidUrls = { ...mockServiceUrls };
+      const invalidUrls: Record<string, string> = { ...mockServiceUrls };
       invalidUrls["knowledge-base"] = "not-a-valid-url";
 
       expect(
@@ -161,9 +161,11 @@ describe("ServicesStatus", () => {
       const result = await servicesStatus.checkService("knowledge-base");
 
       expect(result).toBeTruthy();
-      expect(result.status).toBe("healthy");
-      expect(result.error).toBeNull();
-      expect(result.details).toBeTruthy();
+      if (result) {
+        expect(result.status).toBe("healthy");
+        expect(result.error).toBeNull();
+        expect(result.details).toBeTruthy();
+      }
     });
 
     it("should mark service as unhealthy when health check fails", async () => {
@@ -305,7 +307,7 @@ describe("ServicesStatus", () => {
       const checkPromise = servicesStatus.checkAllServices();
 
       // No need to advance timers since all services succeed on first attempt
-      const result = await checkPromise;
+      await checkPromise;
 
       expect(servicesStatus.isAllHealthy()).toBe(true);
     });
