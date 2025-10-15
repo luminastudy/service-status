@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2](https://github.com/luminastudy/service-status/compare/v1.0.1...v1.0.2) (2025-10-15)
+
+### Bug Fixes
+
+* update ci:publish scripts to use root directory for npm publish ([e67f2e0](https://github.com/luminastudy/service-status/commit/e67f2e0476edb865115c33c703486974a62bfcd9))
+
 ## 1.0.1 (2025-10-15)
 
 ### Features
