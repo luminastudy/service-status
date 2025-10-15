@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3](https://github.com/luminastudy/service-status/compare/v1.0.2...v1.0.3) (2025-10-15)
+
+### Features
+
+* add type-safe service names for improved TypeScript support ([43f4375](https://github.com/luminastudy/service-status/commit/43f43754a7426a8dc760b334759725f684ceeb8f))
+
 ## [1.0.2](https://github.com/luminastudy/service-status/compare/v1.0.1...v1.0.2) (2025-10-15)
 
 ### Bug Fixes
