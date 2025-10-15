@@ -13,7 +13,14 @@
     "type-check": "pnpm exec tsc --noEmit",
     "lint": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "prepublishOnly": "pnpm run clean && pnpm run build",
+    "release": "dotenv -- release-it",
+    "release:minor": "dotenv -- release-it minor",
+    "release:patch": "dotenv -- release-it patch",
+    "release:major": "dotenv -- release-it major",
+    "release:dry": "dotenv -- release-it --dry-run",
+    "release:ci": "dotenv -- release-it --ci"
   },
   "exports": {
     ".": {
@@ -32,6 +39,20 @@
     "microservices",
     "status"
   ],
+  "author": "Lumina Study",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luminastudy/service-status.git"
+  },
+  "bugs": {
+    "url": "https://github.com/luminastudy/service-status/issues"
+  },
+  "homepage": "https://github.com/luminastudy/service-status#readme",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
     "@release-it/conventional-changelog": "^10.0.1",
