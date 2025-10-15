@@ -20,7 +20,15 @@
     "release:patch": "dotenv -- release-it patch",
     "release:major": "dotenv -- release-it major",
     "release:dry": "dotenv -- release-it --dry-run",
-    "release:ci": "dotenv -- release-it --ci"
+    "release:ci": "dotenv -- release-it --ci",
+    "ci:test": "pnpm run lint && pnpm run type-check && pnpm run test",
+    "ci:build": "pnpm run clean && pnpm run build",
+    "ci:release": "dotenv -- release-it --ci --no-git.requireCleanWorkingDir",
+    "ci:release:patch": "dotenv -- release-it patch --ci --no-git.requireCleanWorkingDir",
+    "ci:release:minor": "dotenv -- release-it minor --ci --no-git.requireCleanWorkingDir",
+    "ci:release:major": "dotenv -- release-it major --ci --no-git.requireCleanWorkingDir",
+    "ci:publish": "dotenv -- npm publish ./dist --access public",
+    "ci:publish:dry": "dotenv -- npm publish ./dist --access public --dry-run"
   },
   "exports": {
     ".": {
