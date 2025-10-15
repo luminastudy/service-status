@@ -1,12 +1,9 @@
 // @ts-check
-import config from 'eslint-config-agent';
+import config from "eslint-config-agent/ddd";
 
 export default [
   ...config,
   {
-    ignores: [
-      '**/dist/**',
-      '**/node_modules/**',
-    ],
+    ignores: ["**/dist/**", "**/node_modules/**"],
   },
 ];
