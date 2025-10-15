@@ -2,14 +2,15 @@ import type { ServiceHealthCheck } from './types/ServiceHealthCheck.js';
 import type { ServiceUrls } from './types/ServiceUrls.js';
 import type { ServicesStatusConfig } from './types/ServicesStatusConfig.js';
 import type { ServiceConfig } from './types/ServiceConfig.js';
+import type { ServiceName } from './types/ServiceName.js';
 import { ConfigValidator } from './validators/ConfigValidator.js';
 import { HealthChecker } from './core/HealthChecker.js';
 import { StatusQuery } from './core/StatusQuery.js';
 import { ServiceManager } from './core/ServiceManager.js';
 
-const REQUIRED_SERVICES: ReadonlyArray<keyof ServiceUrls> = ['knowledge-base', 'auth-service'] as const;
+const REQUIRED_SERVICES: ReadonlyArray<ServiceName> = ['knowledge-base', 'auth-service'] as const;
 
-function getServiceUrl(serviceUrls: ServiceUrls, serviceName: keyof ServiceUrls): string {
+function getServiceUrl(serviceUrls: ServiceUrls, serviceName: ServiceName): string {
   return serviceName === 'knowledge-base' ? serviceUrls['knowledge-base'] : serviceUrls['auth-service'];
 }
 
@@ -81,11 +82,11 @@ export class ServicesStatus {
     return this.healthChecks;
   }
 
-  public async checkService(serviceName: string): Promise<ServiceHealthCheck | null> {
+  public async checkService(serviceName: ServiceName): Promise<ServiceHealthCheck | null> {
     return this.serviceManager.checkService(serviceName);
   }
 
-  public getStatus(serviceName: string): ServiceHealthCheck | null {
+  public getStatus(serviceName: ServiceName): ServiceHealthCheck | null {
     return this.statusQuery.getStatus(serviceName);
   }
 

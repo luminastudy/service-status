@@ -6,6 +6,7 @@ Service health check monitoring for Lumina microservices. This package provides 
 
 - Automatic health check monitoring for Lumina services
 - Monitors knowledge-base and auth-service
+- **Type-safe service names** - Full TypeScript support with ServiceName type
 - Requires health check URLs for all predefined services
 - Configurable retry logic
 - Periodic health checks with customizable intervals
@@ -68,7 +69,7 @@ servicesStatus.stop();
 ### Full Configuration Example
 
 ```typescript
-import { ServicesStatus, ServicesStatusConfig, ServiceUrls } from '@lumina-study/services-status';
+import { ServicesStatus, ServicesStatusConfig, ServiceUrls, ServiceName } from '@lumina-study/services-status';
 
 // Define service URLs - ALL are required
 const serviceUrls: ServiceUrls = {
@@ -86,18 +87,40 @@ const config: ServicesStatusConfig = {
 };
 
 const servicesStatus = new ServicesStatus(config);
+
+// Type-safe service name usage
+const serviceName: ServiceName = 'knowledge-base'; // TypeScript will ensure this is valid
+const status = await servicesStatus.checkService(serviceName);
 ```
 
 ### Manual Health Checks
 
 ```typescript
-// Check a specific service manually
+// Check a specific service manually (type-safe)
 const status = await servicesStatus.checkService('auth-service');
 
 // Check all services manually
 const allStatuses = await servicesStatus.checkAllServices();
 ```
 
+### Type-Safe Service Names
+
+All methods that accept service names use the `ServiceName` type, which ensures you can only pass valid service names:
+
+```typescript
+import { ServiceName } from '@lumina-study/services-status';
+
+// ✅ Valid - TypeScript knows these are the only allowed values
+const validName: ServiceName = 'knowledge-base';
+const status = await servicesStatus.checkService('auth-service');
+const kbStatus = servicesStatus.getStatus('knowledge-base');
+
+// ❌ Invalid - TypeScript will show an error at compile time
+const invalidName: ServiceName = 'unknown-service'; // Type error!
+await servicesStatus.checkService('invalid-service'); // Type error!
+```
+
+This prevents runtime errors from typos or invalid service names, making your code more robust and maintainable.
 
 ### Getting Service Lists
 

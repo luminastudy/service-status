@@ -1,4 +1,5 @@
 import type { ServiceHealthCheck } from '../types/ServiceHealthCheck.js';
+import type { ServiceName } from '../types/ServiceName.js';
 
 export class StatusQuery {
   private healthChecks: Map<string, ServiceHealthCheck>;
@@ -7,7 +8,7 @@ export class StatusQuery {
     this.healthChecks = healthChecks;
   }
 
-  public getStatus(serviceName: string): ServiceHealthCheck | null {
+  public getStatus(serviceName: ServiceName): ServiceHealthCheck | null {
     const healthCheck = this.healthChecks.get(serviceName);
     return healthCheck || null;
   }

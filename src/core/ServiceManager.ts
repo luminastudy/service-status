@@ -1,5 +1,6 @@
 import type { ServiceHealthCheck } from '../types/ServiceHealthCheck.js';
 import type { ServiceConfig } from '../types/ServiceConfig.js';
+import type { ServiceName } from '../types/ServiceName.js';
 import { HealthChecker } from './HealthChecker.js';
 
 export class ServiceManager {
@@ -17,7 +18,7 @@ export class ServiceManager {
     this.healthChecks = healthChecks;
   }
 
-  public async checkService(serviceName: string): Promise<ServiceHealthCheck | null> {
+  public async checkService(serviceName: ServiceName): Promise<ServiceHealthCheck | null> {
     if (!this.hasService(serviceName)) {
       return null;
     }
@@ -25,11 +26,11 @@ export class ServiceManager {
     return this.performServiceCheck(serviceName);
   }
 
-  private hasService(serviceName: string): boolean {
+  private hasService(serviceName: ServiceName): boolean {
     return this.services.some((s) => s.name === serviceName);
   }
 
-  private async performServiceCheck(serviceName: string): Promise<ServiceHealthCheck | null> {
+  private async performServiceCheck(serviceName: ServiceName): Promise<ServiceHealthCheck | null> {
     for (const service of this.services) {
       if (service.name !== serviceName) {
         continue;
