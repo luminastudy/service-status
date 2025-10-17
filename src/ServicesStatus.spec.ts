@@ -11,6 +11,7 @@ describe("ServicesStatus", () => {
   const mockServiceUrls = {
     "knowledge-base": "http://localhost:4200/health",
     "auth-service": "http://localhost:2500/health",
+    "recommendation-service": "http://localhost:3500/health",
   };
 
   beforeEach(() => {
@@ -128,15 +129,16 @@ describe("ServicesStatus", () => {
 
       const summary = servicesStatus.getSummary();
 
-      // Should have 2 pre-configured services
-      expect(summary.total).toBe(2);
-      expect(summary.unknown).toBe(2); // All services start as unknown
+      // Should have 3 pre-configured services
+      expect(summary.total).toBe(3);
+      expect(summary.unknown).toBe(3); // All services start as unknown
       expect(summary.healthy).toBe(0);
       expect(summary.unhealthy).toBe(0);
 
       // Check that specific services exist
       expect(servicesStatus.getStatus("knowledge-base")).toBeTruthy();
       expect(servicesStatus.getStatus("auth-service")).toBeTruthy();
+      expect(servicesStatus.getStatus("recommendation-service")).toBeTruthy();
     });
   });
 
@@ -223,8 +225,8 @@ describe("ServicesStatus", () => {
       });
     });
 
-    it("should check all 2 pre-configured services concurrently", async () => {
-      // Mock responses for all 2 services
+    it("should check all 3 pre-configured services concurrently", async () => {
+      // Mock responses for all 3 services
       mockFetch
         .mockResolvedValueOnce({
           ok: true,
@@ -235,26 +237,35 @@ describe("ServicesStatus", () => {
           ok: false,
           status: 500,
           json: async () => ({ error: "Error" }),
-        }); // auth-service
+        }) // auth-service
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ status: "ok" }),
+        }); // recommendation-service
 
       const results = await servicesStatus.checkAllServices();
 
-      expect(results.size).toBe(2);
+      expect(results.size).toBe(3);
 
       // Check individual service statuses
       const knowledgeBaseResult = results.get("knowledge-base");
       const authServiceResult = results.get("auth-service");
+      const recommendationResult = results.get("recommendation-service");
       if (knowledgeBaseResult) {
         expect(knowledgeBaseResult.status).toBe("healthy");
       }
       if (authServiceResult) {
         expect(authServiceResult.status).toBe("unhealthy");
       }
+      if (recommendationResult) {
+        expect(recommendationResult.status).toBe("healthy");
+      }
 
       // Check summary
       const summary = servicesStatus.getSummary();
-      expect(summary.total).toBe(2);
-      expect(summary.healthy).toBe(1);
+      expect(summary.total).toBe(3);
+      expect(summary.healthy).toBe(2);
       expect(summary.unhealthy).toBe(1);
       expect(summary.unknown).toBe(0);
     });
@@ -296,7 +307,7 @@ describe("ServicesStatus", () => {
 
     it("should check if all services are healthy", async () => {
       // Mock all services as healthy
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 3; i++) {
         mockFetch.mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -325,8 +336,8 @@ describe("ServicesStatus", () => {
     });
 
     it("should perform initial check on start", async () => {
-      // Mock responses for all 2 services
-      for (let i = 0; i < 2; i++) {
+      // Mock responses for all 3 services
+      for (let i = 0; i < 3; i++) {
         mockFetch.mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -336,12 +347,12 @@ describe("ServicesStatus", () => {
 
       await servicesStatus.start();
 
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
     });
 
     it("should perform periodic checks", async () => {
-      // Mock responses for initial check (2 services)
-      for (let i = 0; i < 2; i++) {
+      // Mock responses for initial check (3 services)
+      for (let i = 0; i < 3; i++) {
         mockFetch.mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -349,8 +360,8 @@ describe("ServicesStatus", () => {
         });
       }
 
-      // Mock responses for periodic check (2 services)
-      for (let i = 0; i < 2; i++) {
+      // Mock responses for periodic check (3 services)
+      for (let i = 0; i < 3; i++) {
         mockFetch.mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -361,18 +372,18 @@ describe("ServicesStatus", () => {
       await servicesStatus.start();
 
       // Initial check
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
 
       // Advance timer to trigger periodic check
       await vi.advanceTimersByTimeAsync(1000);
 
-      // Should have made another check for all 2 services
-      expect(mockFetch).toHaveBeenCalledTimes(4);
+      // Should have made another check for all 3 services
+      expect(mockFetch).toHaveBeenCalledTimes(6);
     });
 
     it("should stop periodic checks when stop() is called", async () => {
-      // Mock responses for all 2 services
-      for (let i = 0; i < 2; i++) {
+      // Mock responses for all 3 services
+      for (let i = 0; i < 3; i++) {
         mockFetch.mockResolvedValueOnce({
           ok: true,
           status: 200,
@@ -381,13 +392,13 @@ describe("ServicesStatus", () => {
       }
 
       await servicesStatus.start();
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
 
       servicesStatus.stop();
 
       // Advance timer - no new checks should be made
       await vi.advanceTimersByTimeAsync(2000);
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -403,8 +414,8 @@ describe("ServicesStatus", () => {
 
       // Initially all services are unknown
       let summary = servicesStatus.getSummary();
-      expect(summary.total).toBe(2);
-      expect(summary.unknown).toBe(2);
+      expect(summary.total).toBe(3);
+      expect(summary.unknown).toBe(3);
 
       // Mock mixed responses for all services
       mockFetch
@@ -417,6 +428,11 @@ describe("ServicesStatus", () => {
           ok: false,
           status: 500,
           json: async () => ({ error: "Error" }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          status: 200,
+          json: async () => ({ status: "ok" }),
         });
 
       const checkPromise = servicesStatus.checkAllServices();
@@ -424,8 +440,8 @@ describe("ServicesStatus", () => {
       await checkPromise;
 
       summary = servicesStatus.getSummary();
-      expect(summary.total).toBe(2);
-      expect(summary.healthy).toBe(1);
+      expect(summary.total).toBe(3);
+      expect(summary.healthy).toBe(2);
       expect(summary.unhealthy).toBe(1);
       expect(summary.unknown).toBe(0);
     });

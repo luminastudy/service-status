@@ -1,5 +1,4 @@
 import type { ServiceHealthCheck } from './types/ServiceHealthCheck.js';
-import type { ServiceUrls } from './types/ServiceUrls.js';
 import type { ServicesStatusConfig } from './types/ServicesStatusConfig.js';
 import type { ServiceConfig } from './types/ServiceConfig.js';
 import type { ServiceName } from './types/ServiceName.js';
@@ -7,12 +6,9 @@ import { ConfigValidator } from './validators/ConfigValidator.js';
 import { HealthChecker } from './core/HealthChecker.js';
 import { StatusQuery } from './core/StatusQuery.js';
 import { ServiceManager } from './core/ServiceManager.js';
+import { getServiceUrl } from './utils/getServiceUrl.js';
 
-const REQUIRED_SERVICES: ReadonlyArray<ServiceName> = ['knowledge-base', 'auth-service'] as const;
-
-function getServiceUrl(serviceUrls: ServiceUrls, serviceName: ServiceName): string {
-  return serviceName === 'knowledge-base' ? serviceUrls['knowledge-base'] : serviceUrls['auth-service'];
-}
+const REQUIRED_SERVICES: ReadonlyArray<ServiceName> = ['knowledge-base', 'auth-service', 'recommendation-service'] as const;
 
 function buildServices(config: ServicesStatusConfig): ServiceConfig[] {
   const services: ServiceConfig[] = [];

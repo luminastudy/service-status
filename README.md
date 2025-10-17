@@ -5,7 +5,7 @@ Service health check monitoring for Lumina microservices. This package provides 
 ## Features
 
 - Automatic health check monitoring for Lumina services
-- Monitors knowledge-base and auth-service
+- Monitors knowledge-base, auth-service, and recommendation-service
 - **Type-safe service names** - Full TypeScript support with ServiceName type
 - Requires health check URLs for all predefined services
 - Configurable retry logic
@@ -38,6 +38,7 @@ const servicesStatus = new ServicesStatus({
   serviceUrls: {
     'knowledge-base': 'http://localhost:4200/health',
     'auth-service': 'http://localhost:2500/health',
+    'recommendation-service': 'http://localhost:3500/health',
   },
   defaultTimeout: 5000,       // Required: Default timeout for health checks (ms)
   checkInterval: 30000,       // Required: Interval between checks (ms)
@@ -60,7 +61,7 @@ const isSystemHealthy = servicesStatus.isAllHealthy();
 
 // Get summary
 const summary = servicesStatus.getSummary();
-console.log(summary); // { total: 2, healthy: 1, unhealthy: 1, unknown: 0 }
+console.log(summary); // { total: 3, healthy: 2, unhealthy: 1, unknown: 0 }
 
 // Stop health checks when done
 servicesStatus.stop();
@@ -75,6 +76,7 @@ import { ServicesStatus, ServicesStatusConfig, ServiceUrls, ServiceName } from '
 const serviceUrls: ServiceUrls = {
   'knowledge-base': process.env.KNOWLEDGE_BASE_URL || 'http://localhost:4200/health',
   'auth-service': process.env.AUTH_SERVICE_URL || 'http://localhost:2500/health',
+  'recommendation-service': process.env.RECOMMENDATION_SERVICE_URL || 'http://localhost:3500/health',
 };
 
 // Full configuration with service URLs and timing settings
@@ -141,6 +143,7 @@ The package requires health check URLs for all of the following Lumina services:
 
 - **knowledge-base** - Knowledge management service
 - **auth-service** - Authentication and authorization service
+- **recommendation-service** - Learning recommendations service
 
 All service URLs must be provided when creating a ServicesStatus instance. The package will validate that URLs are provided for all required services.
 
@@ -189,6 +192,7 @@ interface ServicesStatusConfig {
 type ServiceUrls = {
   'knowledge-base': string;
   'auth-service': string;
+  'recommendation-service': string;
 }
 ```
 
