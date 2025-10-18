@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0](https://github.com/luminastudy/service-status/compare/v1.0.3...v1.1.0) (2025-10-17)
+
+### Features
+
+* add recommendation-service to preconfigured services ([c86fdfd](https://github.com/luminastudy/service-status/commit/c86fdfd5313ac68c1cf05df3f84c1dbb6cf63996))
+
 ## [1.0.3](https://github.com/luminastudy/service-status/compare/v1.0.2...v1.0.3) (2025-10-15)
 
 ### Features
