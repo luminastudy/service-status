@@ -1,63 +1,69 @@
-import type { ServiceHealthCheck } from '../types/ServiceHealthCheck.js';
-import type { ServiceConfig } from '../types/ServiceConfig.js';
-import type { ServiceName } from '../types/ServiceName.js';
-import { HealthChecker } from './HealthChecker.js';
+import type { ServiceHealthCheck } from '../types/ServiceHealthCheck.js'
+import type { ServiceConfig } from '../types/ServiceConfig.js'
+import type { ServiceName } from '../types/ServiceName.js'
+import { HealthChecker } from './HealthChecker.js'
 
 export class ServiceManager {
-  private services: ServiceConfig[];
-  private healthChecker: HealthChecker;
-  private healthChecks: Map<string, ServiceHealthCheck>;
+  private services: ServiceConfig[]
+  private healthChecker: HealthChecker
+  private healthChecks: Map<string, ServiceHealthCheck>
 
   constructor(
     services: ServiceConfig[],
     healthChecker: HealthChecker,
     healthChecks: Map<string, ServiceHealthCheck>
   ) {
-    this.services = services;
-    this.healthChecker = healthChecker;
-    this.healthChecks = healthChecks;
+    this.services = services
+    this.healthChecker = healthChecker
+    this.healthChecks = healthChecks
   }
 
-  public async checkService(serviceName: ServiceName): Promise<ServiceHealthCheck | null> {
+  public async checkService(
+    serviceName: ServiceName
+  ): Promise<ServiceHealthCheck | null> {
     if (!this.hasService(serviceName)) {
-      return null;
+      return null
     }
 
-    return this.performServiceCheck(serviceName);
+    return this.performServiceCheck(serviceName)
   }
 
   private hasService(serviceName: ServiceName): boolean {
-    return this.services.some((s) => s.name === serviceName);
+    return this.services.some(s => s.name === serviceName)
   }
 
-  private async performServiceCheck(serviceName: ServiceName): Promise<ServiceHealthCheck | null> {
+  private async performServiceCheck(
+    serviceName: ServiceName
+  ): Promise<ServiceHealthCheck | null> {
     for (const service of this.services) {
       if (service.name !== serviceName) {
-        continue;
+        continue
       }
 
-      return this.checkAndStoreResult(service);
+      return this.checkAndStoreResult(service)
     }
-    return null;
+    return null
   }
 
-  private async checkAndStoreResult(service: ServiceConfig): Promise<ServiceHealthCheck | null> {
-    const result = await this.healthChecker.checkService(service);
-    this.healthChecks.set(service.name, result);
-    const healthCheck = this.healthChecks.get(service.name);
-    return healthCheck || null;
+  private async checkAndStoreResult(
+    service: ServiceConfig
+  ): Promise<ServiceHealthCheck | null> {
+    const result = await this.healthChecker.checkService(service)
+    this.healthChecks.set(service.name, result)
+    const healthCheck = this.healthChecks.get(service.name)
+    return healthCheck || null
   }
 
   public async checkAllServices(): Promise<void> {
-    const promises = this.services.map(async (service) => {
-      const result = await this.healthChecker.checkService(service);
-      this.healthChecks.set(service.name, result);
-    });
+    const promises = this.services.map(async service => {
+      const result = await this.healthChecker.checkService(service)
+      this.healthChecks.set(service.name, result)
+    })
 
-    await Promise.allSettled(promises);
+    await Promise.allSettled(promises)
   }
 
   public cancelAll(): void {
-    this.healthChecker.cancelAll();
+    this.healthChecker.cancelAll()
   }
 }

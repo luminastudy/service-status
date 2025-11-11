@@ -1,18 +1,18 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ServiceManager } from './ServiceManager.js';
-import { HealthChecker } from './HealthChecker.js';
-import type { ServiceConfig } from '../types/ServiceConfig.js';
-import type { ServiceHealthCheck } from '../types/ServiceHealthCheck.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { ServiceManager } from './ServiceManager.js'
+import { HealthChecker } from './HealthChecker.js'
+import type { ServiceConfig } from '../types/ServiceConfig.js'
+import type { ServiceHealthCheck } from '../types/ServiceHealthCheck.js'
 
 describe('ServiceManager', () => {
-  let serviceManager: ServiceManager;
-  let healthChecker: HealthChecker;
-  let healthChecks: Map<string, ServiceHealthCheck>;
-  let services: ServiceConfig[];
+  let serviceManager: ServiceManager
+  let healthChecker: HealthChecker
+  let healthChecks: Map<string, ServiceHealthCheck>
+  let services: ServiceConfig[]
 
   beforeEach(() => {
-    healthChecker = new HealthChecker(5000, 3, 1000);
-    healthChecks = new Map();
+    healthChecker = new HealthChecker(5000, 3, 1000)
+    healthChecks = new Map()
     services = [
       {
         name: 'knowledge-base',
@@ -24,15 +24,15 @@ describe('ServiceManager', () => {
         healthCheckUrl: 'http://localhost:2500/health',
         timeout: 5000,
       },
-    ];
-    serviceManager = new ServiceManager(services, healthChecker, healthChecks);
-  });
+    ]
+    serviceManager = new ServiceManager(services, healthChecker, healthChecks)
+  })
 
   describe('checkService', () => {
     it('should return null for non-existent service', async () => {
-      const result = await serviceManager.checkService('non-existent');
-      expect(result).toBeNull();
-    });
+      const result = await serviceManager.checkService('non-existent')
+      expect(result).toBeNull()
+    })
 
     it('should check existing service and update health checks map', async () => {
       vi.spyOn(healthChecker, 'checkService').mockResolvedValueOnce({
@@ -42,17 +42,17 @@ describe('ServiceManager', () => {
         lastChecked: new Date(),
         details: { statusCode: 200 },
         error: null,
-      });
+      })
 
-      const result = await serviceManager.checkService('knowledge-base');
+      const result = await serviceManager.checkService('knowledge-base')
 
-      expect(result).toBeTruthy();
+      expect(result).toBeTruthy()
       if (result) {
-        expect(result.status).toBe('healthy');
-        expect(result.name).toBe('knowledge-base');
+        expect(result.status).toBe('healthy')
+        expect(result.name).toBe('knowledge-base')
       }
-      expect(healthChecks.has('knowledge-base')).toBe(true);
-    });
+      expect(healthChecks.has('knowledge-base')).toBe(true)
+    })
 
     it('should handle service with unhealthy status', async () => {
       vi.spyOn(healthChecker, 'checkService').mockResolvedValueOnce({
@@ -62,21 +62,21 @@ describe('ServiceManager', () => {
         lastChecked: new Date(),
         details: { statusCode: 500 },
         error: 'Service unavailable',
-      });
+      })
 
-      const result = await serviceManager.checkService('auth-service');
+      const result = await serviceManager.checkService('auth-service')
 
-      expect(result).toBeTruthy();
+      expect(result).toBeTruthy()
       if (result) {
-        expect(result.status).toBe('unhealthy');
-        expect(result.error).toBe('Service unavailable');
+        expect(result.status).toBe('unhealthy')
+        expect(result.error).toBe('Service unavailable')
       }
-    });
-  });
+    })
+  })
 
   describe('checkAllServices', () => {
     it('should check all services concurrently', async () => {
-      const checkServiceSpy = vi.spyOn(healthChecker, 'checkService');
+      const checkServiceSpy = vi.spyOn(healthChecker, 'checkService')
       checkServiceSpy.mockResolvedValue({
         url: 'http://localhost:4200/health',
         name: 'test',
@@ -84,16 +84,16 @@ describe('ServiceManager', () => {
         lastChecked: new Date(),
         details: {},
         error: null,
-      });
+      })
 
-      await serviceManager.checkAllServices();
+      await serviceManager.checkAllServices()
 
-      expect(checkServiceSpy).toHaveBeenCalledTimes(2);
-      expect(healthChecks.size).toBe(2);
-    });
+      expect(checkServiceSpy).toHaveBeenCalledTimes(2)
+      expect(healthChecks.size).toBe(2)
+    })
 
     it('should handle mixed results from multiple services', async () => {
-      const checkServiceSpy = vi.spyOn(healthChecker, 'checkService');
+      const checkServiceSpy = vi.spyOn(healthChecker, 'checkService')
       checkServiceSpy
         .mockResolvedValueOnce({
           url: 'http://localhost:4200/health',
@@ -110,22 +110,22 @@ describe('ServiceManager', () => {
           lastChecked: new Date(),
           details: {},
           error: 'Connection failed',
-        });
+        })
 
-      await serviceManager.checkAllServices();
+      await serviceManager.checkAllServices()
 
-      const kbCheck = healthChecks.get('knowledge-base');
-      const authCheck = healthChecks.get('auth-service');
-      expect(kbCheck).toBeTruthy();
-      expect(authCheck).toBeTruthy();
+      const kbCheck = healthChecks.get('knowledge-base')
+      const authCheck = healthChecks.get('auth-service')
+      expect(kbCheck).toBeTruthy()
+      expect(authCheck).toBeTruthy()
       if (kbCheck && authCheck) {
-        expect(kbCheck.status).toBe('healthy');
-        expect(authCheck.status).toBe('unhealthy');
+        expect(kbCheck.status).toBe('healthy')
+        expect(authCheck.status).toBe('unhealthy')
       }
-    });
+    })
 
     it('should handle errors gracefully with Promise.allSettled', async () => {
-      const checkServiceSpy = vi.spyOn(healthChecker, 'checkService');
+      const checkServiceSpy = vi.spyOn(healthChecker, 'checkService')
       checkServiceSpy
         .mockResolvedValueOnce({
           url: 'http://localhost:4200/health',
@@ -135,18 +135,18 @@ describe('ServiceManager', () => {
           details: {},
           error: null,
         })
-        .mockRejectedValueOnce(new Error('Network failure'));
+        .mockRejectedValueOnce(new Error('Network failure'))
 
-      await expect(serviceManager.checkAllServices()).resolves.not.toThrow();
-      expect(healthChecks.size).toBeGreaterThan(0);
-    });
-  });
+      await expect(serviceManager.checkAllServices()).resolves.not.toThrow()
+      expect(healthChecks.size).toBeGreaterThan(0)
+    })
+  })
 
   describe('cancelAll', () => {
     it('should call healthChecker cancelAll', () => {
-      const cancelSpy = vi.spyOn(healthChecker, 'cancelAll');
-      serviceManager.cancelAll();
-      expect(cancelSpy).toHaveBeenCalledTimes(1);
-    });
-  });
-});
+      const cancelSpy = vi.spyOn(healthChecker, 'cancelAll')
+      serviceManager.cancelAll()
+      expect(cancelSpy).toHaveBeenCalledTimes(1)
+    })
+  })
+})

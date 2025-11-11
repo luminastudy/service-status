@@ -1,9 +1,9 @@
-import type { ServiceUrls } from './ServiceUrls.js';
+import type { ServiceUrls } from './ServiceUrls.js'
 
 export interface ServicesStatusConfig {
-  serviceUrls: ServiceUrls;
-  defaultTimeout: number;
-  checkInterval: number;
-  retryAttempts: number;
-  retryDelay: number;
+  serviceUrls: ServiceUrls
+  defaultTimeout: number
+  checkInterval: number
+  retryAttempts: number
+  retryDelay: number
 }

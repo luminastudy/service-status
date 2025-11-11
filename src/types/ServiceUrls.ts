@@ -1,5 +1,5 @@
 export interface ServiceUrls {
-  'knowledge-base': string;
-  'auth-service': string;
-  'recommendation-service': string;
+  'knowledge-base': string
+  'auth-service': string
+  'recommendation-service': string
 }

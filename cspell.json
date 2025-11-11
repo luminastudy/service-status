@@ -1,0 +1,26 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "lumina",
+    "pnpm",
+    "vitest",
+    "husky",
+    "eslint",
+    "tsconfig",
+    "microservices",
+    "healthcheck",
+    "githubusercontent",
+    "prepublishOnly",
+    "conventionalcommits",
+    "serverstatus"
+  ],
+  "ignorePaths": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "pnpm-lock.yaml",
+    "*.min.js",
+    "CHANGELOG.md"
+  ]
+}

@@ -1,5 +1,5 @@
 export interface ServiceConfig {
-  name: string;
-  healthCheckUrl: string;
-  timeout: number;
+  name: string
+  healthCheckUrl: string
+  timeout: number
 }
