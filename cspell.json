@@ -13,7 +13,19 @@
     "githubusercontent",
     "prepublishOnly",
     "conventionalcommits",
-    "serverstatus"
+    "serverstatus",
+    "tupe",
+    "kiro",
+    "MADRC",
+    "WCAG",
+    "lintstagedrc",
+    "ultrathink",
+    "esbenp",
+    "choosealicense",
+    "oneline",
+    "pyproject",
+    "unsanitized",
+    "userform"
   ],
   "ignorePaths": [
     "node_modules",

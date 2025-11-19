@@ -1,5 +1,5 @@
 ---
-description: Initialize or validate package setup with correct package.json, release-it, CI/CD, and build/test configuration. Handles both publishable packages and internal packages.
+description: Initialize or validate package setup with correct package.json, release-it, commitlint, CI/CD, and build/test configuration. Handles both publishable packages and internal packages.
 ---
 
 # Package Setup and Validation
@@ -14,6 +14,7 @@ This command handles two scenarios:
 2. **Internal/Empty Packages**: Setup without publishing, CI/CD with tests/builds only
 
 Both scenarios ensure:
+
 - ✅ Correct package.json configuration
 - ✅ Proper testing setup (vitest if needed)
 - ✅ Proper build setup (vite if needed for libraries)
@@ -47,6 +48,7 @@ test -d .github/workflows && ls -la .github/workflows/ || echo "NO_CI"
 ```
 
 **Categorize the project**:
+
 - **Empty folder**: No package.json, no src/, minimal/no files
 - **Existing package**: Has package.json
 - **New project**: No package.json but has source files
@@ -56,6 +58,7 @@ test -d .github/workflows && ls -la .github/workflows/ || echo "NO_CI"
 Ask the user to clarify the package type:
 
 **Questions to determine**:
+
 1. **Is this package meant to be published to npm?** (Yes/No)
 2. **Does this package need a build step?** (Yes for libraries, No for pure Node.js packages)
 3. **Does this package need tests?** (Usually Yes)
@@ -63,6 +66,7 @@ Ask the user to clarify the package type:
 5. **Package description**: Brief description of what it does
 
 Based on answers, set:
+
 - `PUBLISHABLE`: true/false
 - `NEEDS_BUILD`: true/false
 - `NEEDS_TESTS`: true/false
@@ -96,9 +100,7 @@ Then ensure it has these essential fields:
       "import": "./dist/index.js"
     }
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
@@ -117,7 +119,7 @@ Then ensure it has these essential fields:
   "author": "",
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   }
 }
 ```
@@ -125,6 +127,7 @@ Then ensure it has these essential fields:
 **For existing package.json**:
 
 Validate and fix:
+
 1. ✅ `type` should be `"module"` (ES modules)
 2. ✅ `main` points to built output (usually `./dist/index.js`)
 3. ✅ `types` points to type definitions (usually `./dist/index.d.ts`)
@@ -156,6 +159,9 @@ pnpm add -D eslint@latest eslint-config-agent@latest
 # Git hooks and pre-commit checks
 pnpm add -D husky lint-staged
 
+# Commit message linting
+pnpm add -D @commitlint/cli @commitlint/config-conventional
+
 # Spell checking
 pnpm add -D cspell
 
@@ -164,9 +170,9 @@ if [ "$NEEDS_TESTS" = "true" ]; then
   pnpm add -D vitest @vitest/coverage-v8
 fi
 
-# Add release-it if publishable
+# Add release-it and package.json validation if publishable
 if [ "$PUBLISHABLE" = "true" ]; then
-  pnpm add -D release-it
+  pnpm add -D release-it eslint-config-publishable-package-json
 fi
 
 # Note: For most TS packages, tsc is sufficient for building
@@ -197,11 +203,12 @@ fi
     "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
 }
 ```
 
 **Validation checklist**:
+
 - ✅ `strict: true` for type safety
 - ✅ `declaration: true` for .d.ts files
 - ✅ `outDir` matches package.json main field
@@ -224,7 +231,7 @@ export default defineConfig({
       exclude: [
         'node_modules/',
         'dist/',
-        '**/*.test.ts',
+        '**/*.spec.ts',
         '**/*.config.ts',
         'coverage/',
       ],
@@ -235,29 +242,43 @@ export default defineConfig({
 
 ### Step 2: Create Example Test Structure
 
-If `src/__tests__/` doesn't exist:
-
-```bash
-mkdir -p src/__tests__
-```
-
-Create example test file `src/__tests__/example.test.ts`:
+Create an example test file next to the source file `src/index.spec.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest'
+import { hello } from './index.js'
 
-describe('Example Test Suite', () => {
-  it('should pass', () => {
-    expect(true).toBe(true)
+describe('hello', () => {
+  it('should return greeting with name', () => {
+    expect(hello('World')).toBe('Hello, World!')
   })
 })
 ```
+
+**Note**: Following DDD principles, test files (`.spec.ts`) should be placed next to their corresponding logic files, not in a separate `__tests__/` directory.
 
 ## Phase 5: Linting and Formatting Setup
 
 ### Step 1: Create eslint.config.mjs
 
 **IMPORTANT**: Use ONLY `eslint-config-agent` - no other ESLint configs or plugins needed!
+
+**For publishable packages**:
+
+```javascript
+import agentConfig from 'eslint-config-agent'
+import publishablePackageJson from 'eslint-config-publishable-package-json'
+
+export default [
+  ...agentConfig,
+  ...publishablePackageJson,
+  {
+    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.mjs'],
+  },
+]
+```
+
+**For internal packages**:
 
 ```javascript
 import agentConfig from 'eslint-config-agent'
@@ -270,7 +291,10 @@ export default [
 ]
 ```
 
-That's it! `eslint-config-agent` provides a complete, opinionated ESLint configuration optimized for AI-assisted development. No need for custom rules or additional plugins.
+**What each config does**:
+
+- `eslint-config-agent`: Complete, opinionated ESLint configuration optimized for AI-assisted development
+- `eslint-config-publishable-package-json`: Validates package.json fields for npm publishing (publishable packages only)
 
 ### Step 2: Create .prettierrc
 
@@ -303,15 +327,7 @@ Spell checking configuration for the project:
 {
   "version": "0.2",
   "language": "en",
-  "words": [
-    "tupe",
-    "pnpm",
-    "vitest",
-    "husky",
-    "eslint",
-    "tsconfig",
-    "esbenp"
-  ],
+  "words": ["tupe", "pnpm", "vitest", "husky", "eslint", "tsconfig", "esbenp"],
   "ignorePaths": [
     "node_modules",
     "dist",
@@ -324,7 +340,46 @@ Spell checking configuration for the project:
 
 **Note**: Add project-specific words to the `words` array as needed.
 
-## Phase 6: Git Hooks Setup (Husky + lint-staged)
+### Step 5: Create commitlint.config.mjs
+
+Commit message linting configuration for enforcing conventional commits:
+
+```javascript
+export default {
+  extends: ['@commitlint/config-conventional'],
+  rules: {
+    'type-enum': [
+      2,
+      'always',
+      [
+        'feat',
+        'fix',
+        'docs',
+        'style',
+        'refactor',
+        'test',
+        'chore',
+        'perf',
+        'ci',
+        'build',
+        'revert',
+      ],
+    ],
+    'subject-case': [2, 'never', ['upper-case']],
+    'header-max-length': [2, 'always', 100],
+  },
+}
+```
+
+**What this does**:
+
+- Enforces conventional commit format: `type(scope): description`
+- Validates commit message types (feat, fix, docs, etc.)
+- Ensures subject line doesn't start with uppercase
+- Limits header to 100 characters
+- Runs automatically on every commit via husky
+
+## Phase 6: Git Hooks Setup (Husky + lint-staged + commitlint)
 
 ### Step 1: Initialize Husky
 
@@ -342,7 +397,6 @@ pnpm exec husky init
 Create `.husky/pre-push` file to run checks before pushing:
 
 ```bash
-#!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
 echo "🔍 Running pre-push checks..."
@@ -390,16 +444,9 @@ Create `.lintstagedrc.json` for staged file linting:
 
 ```json
 {
-  "*.{ts,tsx,js,jsx}": [
-    "eslint --fix",
-    "prettier --write"
-  ],
-  "*.{json,md}": [
-    "prettier --write"
-  ],
-  "*.{ts,js,md,json}": [
-    "cspell lint --no-must-find-files"
-  ]
+  "*.{ts,tsx,js,jsx}": ["eslint --fix", "prettier --write"],
+  "*.{json,md}": ["prettier --write"],
+  "*.{ts,js,md,json}": ["cspell lint --no-must-find-files"]
 }
 ```
 
@@ -408,7 +455,6 @@ Create `.lintstagedrc.json` for staged file linting:
 Create `.husky/pre-commit` for staged files:
 
 ```bash
-#!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
 # Run lint-staged
@@ -421,7 +467,45 @@ Make it executable:
 chmod +x .husky/pre-commit
 ```
 
-### Step 5: Verify Husky Setup
+### Step 5: Create commit-msg Hook
+
+Create `.husky/commit-msg` for commit message linting:
+
+```bash
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run commitlint on commit message
+pnpm exec commitlint --edit "$1"
+```
+
+Make it executable:
+
+```bash
+chmod +x .husky/commit-msg
+```
+
+**What this does**:
+
+- Runs commitlint on every commit message
+- Validates commit follows conventional commit format
+- Blocks commits with invalid messages
+- Provides helpful error messages about what's wrong
+
+**Example validation**:
+
+```bash
+# ✅ Valid commits:
+git commit -m "feat(api): add user authentication"
+git commit -m "fix(parser): handle null values"
+git commit -m "docs(readme): update installation steps"
+
+# ❌ Invalid commits:
+git commit -m "Add feature"  # Missing type
+git commit -m "FEAT: something"  # Wrong format
+git commit -m "random stuff"  # No conventional format
+```
+
+### Step 6: Verify Husky Setup
 
 ```bash
 # Check husky hooks exist
@@ -429,23 +513,34 @@ ls -la .husky/
 
 # Should show:
 # - pre-commit (runs lint-staged on staged files)
+# - commit-msg (validates commit message format)
 # - pre-push (runs full lint, format, spell, test checks)
 
 # Test pre-commit hook manually
 git add .
 .husky/pre-commit
 
+# Test commit-msg hook manually
+echo "feat(test): testing commitlint" | .husky/commit-msg
+
 # Test pre-push hook manually
 .husky/pre-push
 ```
 
 **Hook Workflow**:
-1. **pre-commit**: Runs on `git commit`
+
+1. **pre-commit**: Runs on `git commit` (before commit message)
    - Lints and formats only staged files
    - Runs spell check on staged files
    - Fast feedback loop
 
-2. **pre-push**: Runs on `git push`
+2. **commit-msg**: Runs on `git commit` (after entering commit message)
+   - Validates commit message format
+   - Enforces conventional commits
+   - Blocks non-conforming messages
+   - Provides helpful error feedback
+
+3. **pre-push**: Runs on `git push`
    - Full project lint check
    - Full format check
    - Full spell check
@@ -507,9 +602,9 @@ name: CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -517,37 +612,35 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: latest
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-    - name: Lint
-      run: pnpm lint
+      - name: Lint
+        run: pnpm lint
 
-    - name: Format check
-      run: pnpm format:check
+      - name: Format check
+        run: pnpm format:check
 
-    - name: Run tests
-      run: pnpm test --run
+      - name: Run tests
+        run: pnpm test --run
 
-    - name: Build
-      run: pnpm build
+      - name: Build
+        run: pnpm build
 
   publish:
     needs: test
@@ -555,34 +648,75 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: latest
+      - name: Check if version changed
+        id: version_check
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'pnpm'
-        registry-url: 'https://registry.npmjs.org'
+          # Get version from previous commit
+          git checkout HEAD~1 package.json 2>/dev/null || echo "No previous commit"
+          PREV_VERSION=$(node -p "require('./package.json').version" 2>/dev/null || echo "none")
+          echo "Previous version: $PREV_VERSION"
 
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+          # Restore current package.json
+          git checkout HEAD package.json
 
-    - name: Build
-      run: pnpm build
+          # Compare versions
+          if [ "$CURRENT_VERSION" != "$PREV_VERSION" ]; then
+            echo "Version changed from $PREV_VERSION to $CURRENT_VERSION"
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version unchanged, skipping publish"
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Publish to npm
-      run: pnpm publish --access public --no-git-checks
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Install pnpm
+        if: steps.version_check.outputs.should_publish == 'true'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        if: steps.version_check.outputs.should_publish == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        if: steps.version_check.outputs.should_publish == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        if: steps.version_check.outputs.should_publish == 'true'
+        run: pnpm build
+
+      - name: Publish to npm
+        if: steps.version_check.outputs.should_publish == 'true'
+        run: pnpm publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
+
+**Version Change Detection**:
+
+The publish job includes a smart version change check that:
+
+- Compares the current package.json version with the previous commit's version
+- Only publishes to npm when the version has actually changed
+- Skips all publish steps (saving CI time) if the version is unchanged
+- Prevents accidental duplicate publishes of the same version
+
+This means you **must bump the version** in package.json before merging to main for a publish to occur. You can either:
+
+1. Manually edit package.json and change the version
+2. Use `pnpm release` which handles version bumping, changelog, and git tags automatically
 
 **For Internal/Non-Publishable Packages** (`.github/workflows/ci.yml`):
 
@@ -591,9 +725,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -601,37 +735,35 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [20, 22]
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@v4
-      with:
-        version: latest
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
-    - name: Setup Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'pnpm'
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
 
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-    - name: Lint
-      run: pnpm lint
+      - name: Lint
+        run: pnpm lint
 
-    - name: Format check
-      run: pnpm format:check
+      - name: Format check
+        run: pnpm format:check
 
-    - name: Run tests
-      run: pnpm test --run
+      - name: Run tests
+        run: pnpm test --run
 
-    - name: Build
-      run: pnpm build
+      - name: Build
+        run: pnpm build
 ```
 
 ### Step 3: Verify GitHub CLI and Repository Setup
@@ -677,7 +809,7 @@ fi
 
 ### Step 2: Create .gitignore
 
-```
+```gitignore
 # Dependencies
 node_modules/
 .pnp
@@ -715,10 +847,281 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Claude Code temporary files
+.claude-container/
+eslint-report.json
+
 # Temporary files
 *.tmp
 .cache/
 ```
+
+### Step 3: Create CONTRIBUTING.md
+
+Create a comprehensive contributing guide for the project:
+
+````bash
+if [ ! -f CONTRIBUTING.md ]; then
+  cat > CONTRIBUTING.md << 'EOF'
+# Contributing to [PACKAGE_NAME]
+
+Thank you for your interest in contributing! This document provides guidelines and instructions for contributing to this project.
+
+## Getting Started
+
+1. **Fork the repository** and clone it locally
+2. **Install dependencies**: `pnpm install`
+3. **Create a branch** for your changes: `git checkout -b feature/your-feature-name`
+
+## Development Workflow
+
+### Prerequisites
+
+- Node.js >= 20.0.0
+- pnpm (latest version)
+
+### Setup
+
+```bash
+# Install dependencies
+pnpm install
+
+# Build the project
+pnpm build
+
+# Run tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+````
+
+### Development Commands
+
+- `pnpm dev` - Build in watch mode
+- `pnpm test` - Run tests
+- `pnpm test:coverage` - Run tests with coverage
+- `pnpm lint` - Check code quality
+- `pnpm lint:fix` - Fix linting issues
+- `pnpm format` - Format code
+- `pnpm format:check` - Check formatting
+- `pnpm spell` - Check spelling
+
+## Making Changes
+
+### Code Style
+
+This project uses:
+
+- **TypeScript** with strict mode
+- **ESLint** with `eslint-config-agent` for linting
+- **Prettier** for code formatting
+- **cspell** for spell checking
+
+The codebase follows these conventions:
+
+- ES modules (use `.js` extensions in imports)
+- Strict TypeScript types
+- Descriptive variable and function names
+- Comprehensive JSDoc comments for public APIs
+
+### Commit Messages
+
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
+
+```
+type(scope): description
+
+[optional body]
+
+[optional footer]
+```
+
+**Types**:
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, etc.)
+- `refactor`: Code refactoring
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks
+
+**Examples**:
+
+```
+feat(api): add user authentication endpoint
+fix(parser): handle edge case in date parsing
+docs(readme): update installation instructions
+```
+
+### Testing
+
+- Write tests for all new features and bug fixes
+- Ensure all tests pass: `pnpm test`
+- Maintain or improve code coverage
+- Tests should be in `.spec.ts` files next to their corresponding logic files (DDD approach)
+- Use descriptive test names
+
+### Git Hooks
+
+This project uses Husky for git hooks:
+
+- **Pre-commit**: Runs lint-staged (lints, formats, and spell-checks staged files)
+- **Commit-msg**: Validates commit message format using commitlint (enforces conventional commits)
+- **Pre-push**: Runs full validation (lint, format, spell check, tests)
+
+These hooks ensure code quality and consistent commit messages before commits and pushes.
+
+**Important**: Commit messages must follow the conventional commits format or they will be rejected. See the "Commit Messages" section above for details.
+
+## Submitting Changes
+
+### Pull Request Process
+
+1. **Update your fork** with the latest changes from main:
+
+   ```bash
+   git checkout main
+   git pull upstream main
+   ```
+
+2. **Rebase your branch** (if needed):
+
+   ```bash
+   git checkout your-branch
+   git rebase main
+   ```
+
+3. **Run all checks locally**:
+
+   ```bash
+   pnpm lint
+   pnpm format:check
+   pnpm spell
+   pnpm test
+   pnpm build
+   ```
+
+4. **Push your changes**:
+
+   ```bash
+   git push origin your-branch
+   ```
+
+5. **Open a Pull Request** on GitHub with:
+   - Clear title describing the change
+   - Description of what changed and why
+   - Reference to any related issues
+   - Screenshots (if UI changes)
+
+### Pull Request Guidelines
+
+- Keep PRs focused on a single feature or fix
+- Write clear, descriptive PR titles and descriptions
+- Link related issues using "Fixes #123" or "Closes #123"
+- Ensure CI passes (tests, linting, formatting)
+- Respond to review feedback promptly
+- Keep commits clean and well-organized
+
+## Reporting Issues
+
+### Bug Reports
+
+When reporting bugs, please include:
+
+- **Description**: Clear description of the bug
+- **Steps to reproduce**: Detailed steps to reproduce the issue
+- **Expected behavior**: What you expected to happen
+- **Actual behavior**: What actually happened
+- **Environment**: Node.js version, OS, package version
+- **Error messages**: Full error messages or stack traces
+- **Code samples**: Minimal reproduction if possible
+
+### Feature Requests
+
+When requesting features, please include:
+
+- **Use case**: Why is this feature needed?
+- **Proposed solution**: How should it work?
+- **Alternatives**: What alternatives have you considered?
+- **Examples**: Examples of similar features elsewhere
+
+## Questions?
+
+- Check existing issues and discussions
+- Read the documentation in README.md
+- Open a new issue with the "question" label
+
+## Code of Conduct
+
+- Be respectful and inclusive
+- Welcome newcomers and beginners
+- Focus on constructive feedback
+- Assume good intentions
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the same license as the project (see LICENSE file).
+
+---
+
+Thank you for contributing! 🎉
+EOF
+echo "✅ Created CONTRIBUTING.md"
+else
+echo "ℹ️ CONTRIBUTING.md already exists"
+fi
+
+````
+
+### Step 4: Create LICENSE File
+
+Create an MIT License file (or ask user for preference):
+
+```bash
+# Ask user for license preference if this is a new project
+if [ ! -f LICENSE ]; then
+  # Get current year
+  YEAR=$(date +%Y)
+
+  # Get author from package.json or git config
+  AUTHOR=$(node -p "require('./package.json').author" 2>/dev/null || git config user.name || echo "Your Name")
+
+  cat > LICENSE << EOF
+MIT License
+
+Copyright (c) $YEAR $AUTHOR
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+EOF
+  echo "✅ Created LICENSE (MIT)"
+else
+  echo "ℹ️  LICENSE already exists"
+fi
+````
+
+**Note**: The MIT License is used by default. If you need a different license (Apache-2.0, GPL-3.0, etc.), you can:
+
+1. Replace the LICENSE content after running this command
+2. Use GitHub's license chooser: [choosealicense.com](https://choosealicense.com/)
+3. Update the `license` field in package.json to match
 
 ## Phase 10: Validation and Testing
 
@@ -780,6 +1183,7 @@ done
 Review and confirm:
 
 **Package Configuration**:
+
 - ✅ package.json exists with correct fields
 - ✅ `type: "module"` for ES modules
 - ✅ `main` and `types` fields point to dist/
@@ -789,17 +1193,21 @@ Review and confirm:
 - ✅ If publishable: `publishConfig.access` is set
 
 **TypeScript Configuration**:
+
 - ✅ tsconfig.json exists with strict mode
 - ✅ Compiles without errors (`pnpm tsc --noEmit`)
 - ✅ Generates .d.ts files (`declaration: true`)
 
 **Testing Setup** (if needed):
+
 - ✅ vitest.config.ts exists
 - ✅ Tests run successfully (`pnpm test`)
 - ✅ Coverage configuration works
 
 **Linting and Formatting**:
+
 - ✅ eslint.config.mjs exists with eslint-config-agent@latest
+- ✅ If publishable: eslint-config-publishable-package-json validates package.json
 - ✅ .prettierrc exists
 - ✅ cspell.json exists
 - ✅ Linting passes (`pnpm lint`)
@@ -807,36 +1215,51 @@ Review and confirm:
 - ✅ Spell checking passes (`pnpm spell`)
 
 **CI/CD**:
+
 - ✅ .github/workflows/ci.yml exists
 - ✅ Workflow is valid YAML
-- ✅ Tests node versions 18, 20, 22
+- ✅ Tests node versions 20, 22
 - ✅ Runs lint, format, test, build
 - ✅ If publishable: Has publish job with NPM_TOKEN
+- ✅ If publishable: Publish only runs when package.json version changes
 
 **Release Configuration** (if publishable):
+
 - ✅ release-it installed as devDependency
 - ✅ .release-it.json exists and configured
 - ✅ `pnpm release` script exists
 
-**Git Hooks (Husky + lint-staged)**:
+**Git Hooks (Husky + lint-staged + commitlint)**:
+
 - ✅ Husky installed and initialized
+- ✅ commitlint.config.mjs exists (conventional commits config)
 - ✅ .husky/pre-commit exists (runs lint-staged)
+- ✅ .husky/commit-msg exists (validates commit messages)
 - ✅ .husky/pre-push exists (runs full checks)
 - ✅ .lintstagedrc.json configured
 - ✅ Pre-commit hook works (test manually)
+- ✅ Commit-msg hook works (test manually)
 - ✅ Pre-push hook works (test manually)
 
 **Git Configuration**:
+
 - ✅ .gitignore exists and excludes dist/, node_modules/
 - ✅ Repository is connected to GitHub
 - ✅ gh CLI is authenticated
 - ✅ If publishable: NPM_TOKEN secret is set
 
+**Documentation**:
+
+- ✅ CONTRIBUTING.md exists with contribution guidelines
+- ✅ LICENSE file exists (MIT or chosen license)
+- ✅ README.md has basic project information
+- ✅ License in package.json matches LICENSE file
+
 ### Generate Summary Report
 
 Provide a comprehensive summary:
 
-```
+```text
 📦 Package Setup Complete!
 
 Package: PACKAGE_NAME
@@ -847,14 +1270,18 @@ Version: X.X.X
   - package.json (ES modules, pnpm)
   - tsconfig.json (strict TypeScript)
   - vitest.config.ts (testing)
-  - eslint.config.mjs (eslint-config-agent@latest)
+  - eslint.config.mjs (eslint-config-agent@latest [+ package.json validation if publishable])
   - .prettierrc (formatting)
   - .prettierignore
   - cspell.json (spell checking)
+  - commitlint.config.mjs (conventional commits)
   - .lintstagedrc.json (staged file linting)
   - .husky/pre-commit (lint-staged on commit)
+  - .husky/commit-msg (commit message validation)
   - .husky/pre-push (full checks before push)
   - .gitignore (git exclusions)
+  - CONTRIBUTING.md (contribution guidelines)
+  - LICENSE (MIT license)
   [- .release-it.json (releases)] - if publishable
   - .github/workflows/ci.yml (CI/CD)
 
@@ -863,9 +1290,11 @@ Version: X.X.X
   - ESLint@latest + eslint-config-agent@latest
   - Prettier
   - cspell (spell checking)
+  - commitlint + @commitlint/config-conventional (commit message linting)
   - Husky + lint-staged (git hooks)
   - Vitest (testing)
   [- release-it] - if publishable
+  [- eslint-config-publishable-package-json] - if publishable
 
 ✅ Scripts Available:
   pnpm build         - Build TypeScript
@@ -882,23 +1311,26 @@ Version: X.X.X
 
 ✅ Git Hooks Configured:
   Pre-commit:  Runs lint-staged (lint, format, spell check staged files)
+  Commit-msg:  Validates commit message format (conventional commits)
   Pre-push:    Runs full validation (lint, format, spell, tests)
 
 ✅ CI/CD Setup:
   - GitHub Actions workflow configured
-  - Tests on Node 18, 20, 22
+  - Tests on Node 20, 22
   - Runs lint, format, spell, test, build
-  [- Auto-publishes to npm on main push] - if publishable
+  [- Auto-publishes to npm on main push (only when version changes)] - if publishable
 
 ⚠️  Next Steps:
   1. [If publishable] Add NPM_TOKEN secret to GitHub repository
-  2. Test git hooks (make a commit to test pre-commit, try pushing to test pre-push)
-  3. Write your package code in src/
-  4. Add tests in src/__tests__/
-  5. Update package.json metadata (author, keywords, etc.)
-  6. Add project-specific words to cspell.json
-  7. Push to GitHub to trigger CI
-  [8. Run `pnpm release` to publish first version] - if publishable
+  2. Review and customize CONTRIBUTING.md for your project
+  3. Verify LICENSE file has correct copyright year and author
+  4. Test git hooks (make a commit to test pre-commit, try pushing to test pre-push)
+  5. Write your package code in src/
+  6. Add tests in `.spec.ts` files next to your logic files (DDD approach)
+  7. Update package.json metadata (author, keywords, description, repository URL)
+  8. Add project-specific words to cspell.json
+  9. Push to GitHub to trigger CI
+  [10. Run `pnpm release` to publish first version] - if publishable
 
 🚀 Ready to develop!
 ```
@@ -908,6 +1340,7 @@ Version: X.X.X
 ### For Publishable Packages
 
 1. **NPM Token Required**: You must add `NPM_TOKEN` secret to GitHub repository settings:
+
    ```bash
    # Get npm token from ~/.npmrc or create one:
    npm token create
@@ -921,8 +1354,9 @@ Version: X.X.X
 3. **Publishing Workflow**:
    - Develop and commit to feature branches
    - Merge to main (triggers CI)
-   - If tests pass, automatically publishes
-   - Or use `pnpm release` for manual release with changelog
+   - If tests pass AND version changed, automatically publishes
+   - Version must be bumped in package.json for publish to trigger
+   - Or use `pnpm release` for manual release with changelog and version bump
 
 ### For Internal Packages
 
@@ -947,7 +1381,7 @@ Version: X.X.X
 ### Common Issues
 
 1. **`pnpm install` fails**:
-   - Check Node.js version (need >= 18)
+   - Check Node.js version (need >= 20)
    - Clear pnpm cache: `pnpm store prune`
 
 2. **TypeScript compilation fails**:
@@ -967,7 +1401,7 @@ Version: X.X.X
 
 5. **Tests fail**:
    - Check vitest.config.ts exists
-   - Verify test files match pattern `*.test.ts`
+   - Verify test files match pattern `*.spec.ts`
    - Run locally first: `pnpm test`
 
 ## Success Criteria
