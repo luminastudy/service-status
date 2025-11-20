@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ServiceManager } from './ServiceManager.js'
-import { HealthChecker } from './HealthChecker.js'
 import type { ServiceConfig } from '../types/ServiceConfig.js'
 import type { ServiceHealthCheck } from '../types/ServiceHealthCheck.js'
+import { ServiceManager } from './ServiceManager.js'
+import { HealthChecker } from './HealthChecker.js'
 
 describe('ServiceManager', () => {
   let serviceManager: ServiceManager

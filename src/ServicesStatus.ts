@@ -12,7 +12,9 @@ import { getServiceUrl } from './utils/getServiceUrl.js'
 const REQUIRED_SERVICES: ReadonlyArray<ServiceName> = [
   'knowledge-base',
   'auth-service',
-  'recommendation-service',
+  'user-service',
+  'feedback-service',
+  'courses-service',
 ] as const
 
 function buildServices(config: ServicesStatusConfig): ServiceConfig[] {

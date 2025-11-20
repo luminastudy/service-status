@@ -11,6 +11,7 @@ export default [
       '**/node_modules/**',
       '**/*.config.js',
       '**/*.config.ts',
+      'example.js',
     ],
   },
 ]

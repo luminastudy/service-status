@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { HealthChecker } from './HealthChecker.js'
 import type { ServiceConfig } from '../types/ServiceConfig.js'
+import { HealthChecker } from './HealthChecker.js'
 
 const mockFetch = vi.fn()
 global.fetch = mockFetch

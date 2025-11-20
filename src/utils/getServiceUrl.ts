@@ -12,8 +12,14 @@ export function getServiceUrl(
   if (serviceName === 'auth-service') {
     return serviceUrls['auth-service']
   }
-  if (serviceName === 'recommendation-service') {
-    return serviceUrls['recommendation-service']
+  if (serviceName === 'user-service') {
+    return serviceUrls['user-service']
+  }
+  if (serviceName === 'feedback-service') {
+    return serviceUrls['feedback-service']
+  }
+  if (serviceName === 'courses-service') {
+    return serviceUrls['courses-service']
   }
   throw new ValidationError(`Unknown service: ${serviceName}`)
 }

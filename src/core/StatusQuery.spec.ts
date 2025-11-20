@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { StatusQuery } from './StatusQuery.js'
 import type { ServiceHealthCheck } from '../types/ServiceHealthCheck.js'
+import { StatusQuery } from './StatusQuery.js'
 
 describe('StatusQuery', () => {
   let statusQuery: StatusQuery

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { ServiceUrlExtractor } from './ServiceUrlExtractor.js'
 import { ValidationError } from '../errors/ValidationError.js'
+import { ServiceUrlExtractor } from './ServiceUrlExtractor.js'
 
 describe('ServiceUrlExtractor', () => {
   const mockUrls = {

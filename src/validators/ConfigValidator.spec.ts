@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { ConfigValidator } from './ConfigValidator.js'
 import { CustomError } from '../errors/CustomError.js'
 import { TimeoutError } from '../errors/TimeoutError.js'
 import { ValidationError } from '../errors/ValidationError.js'
+import { ConfigValidator } from './ConfigValidator.js'
 
 describe('ConfigValidator', () => {
   const validConfig = {
