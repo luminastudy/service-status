@@ -25,7 +25,8 @@
     "oneline",
     "pyproject",
     "unsanitized",
-    "userform"
+    "userform",
+    "commitlint"
   ],
   "ignorePaths": [
     "node_modules",
